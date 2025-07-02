@@ -3,72 +3,61 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
+app.use(cors());
 app.use(express.json());
 
-const targetReferrers = [
-  "adspy.com",
-  "bigspy.com",
-  "minea.com",
-  "adspyder.io",
-  "adflex.io",
-  "poweradspy.com",
-  "dropispy.com",
-  "socialpeta.com",
-  "adstransparency.google.com",
-  "facebook.com/ads/library",
-  "adbeat.com",
-  "anstrex.com",
-  "semrush.com",
-  "autods.com",
-  "foreplay.co",
-  "spyfu.com",
-  "adplexity.com",
-  "spypush.com",
-  "nativeadbuzz.com",
-  "spyover.com",
-  "videoadvault.com",
-  "admobispy.com",
-  "ispionage.com",
-  "similarweb.com",
-  "pipiads.com",
-  "adespresso.com",
-];
+app.post("/scripts/v1", (req, res) => {
+  const { rtkcmpid, ringba_id } = req.body;
 
-function cloacking(req, res, next) {
-  const { sub6, key, ref } = req.body;
-
-  if (!sub6 || !key) {
-    return res.status(400).json({
-      valid: 0,
-      number: "+1 (855) 784-2245",
-    });
+  if (!rtkcmpid || !ringba_id) {
+    return res.status(400).send("Missing rtkcmpid or ringba_id");
   }
 
-  const isSub6Valid = typeof sub6 === "string" && sub6.length > 3;
-  const isKeyValid = key === "X184GA";
-  const isReferrerValid =
-    !ref ||
-    !targetReferrers.some((dom) =>
-      ref.toLowerCase().includes(dom.toLowerCase())
-    );
+  // Construct the full <script> output
+  const responseHTML = `
+    <script src="https://trk.seniorbenefithelptoday.com/track.js?rtkcmpid=${rtkcmpid}" type="text/javascript"></script>
 
-  if (isSub6Valid && isKeyValid && isReferrerValid) {
-    return next();
-  } else {
-    return res.status(400).json({
-      valid: 0,
-      number: "+1 (855) 784-2245",
-    });
-  }
-}
+    <script>
+      const loadRingba = () => {
+        var script = document.createElement("script");
+        script.src = "//b-js.ringba.com/${ringba_id}";
+        let timeoutId = setTimeout(addRingbaTags, 1000);
+        script.onload = function () {
+          clearTimeout(timeoutId);
+          addRingbaTags();
+        };
+        document.head.appendChild(script);
+      };
 
-app.post("/validate", cloacking, (req, res) => {
-  return res.json({
-    valid: 1,
-  });
+      function addRingbaTags() {
+        let qualifiedValue =
+          new URL(window.location.href).searchParams.get("qualified") || "unknown";
+
+        (window._rgba_tags = window._rgba_tags || []).push({
+          type: "RT",
+          track_attempted: "yes",
+          qualified: qualifiedValue,
+        });
+
+        var intervalId = setInterval(() => {
+          if (window.rtkClickID !== undefined) {
+            (window._rgba_tags = window._rgba_tags || []).push({
+              type: "RT",
+              clickid: window.rtkClickID,
+              qualified: qualifiedValue,
+            });
+            clearInterval(intervalId);
+          }
+        }, 500);
+      }
+
+      loadRingba();
+    </script>
+  `;
+
+  return res.type("text/html").send(responseHTML);
 });
 
-// Start the server
 app.listen(PORT, () => {
-  console.log(`✅ API running on http://localhost:${PORT}`);
+  console.log(`✅ API running at http://localhost:${PORT}`);
 });
