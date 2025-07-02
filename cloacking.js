@@ -3,17 +3,31 @@ const cors = require("cors");
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+// ✅ CORS setup — allow all origins for now (customize if needed)
+app.use(
+  cors({
+    origin: "*", // You can replace with specific domain in production
+    methods: ["POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+// ✅ Preflight handler
+app.options("*", cors());
+
 app.use(express.json());
 
 app.post("/scripts/v1", (req, res) => {
-  const { rtkcmpid, ringba_id } = req.body;
+  const { rtkcmpid, ringba_id, domain } = req.body;
 
-  if (!rtkcmpid || !ringba_id) {
-    return res.status(400).send("Missing rtkcmpid or ringba_id");
+  // ✅ Validate required fields
+  if (!rtkcmpid || !ringba_id || !domain) {
+    return res.status(400).send("Missing rtkcmpid, ringba_id, or domain");
   }
 
-  // Construct the full <script> output
+  console.log(`🔗 Request from domain: ${domain}`);
+
+  // ✅ Generate tracking scripts HTML
   const responseHTML = `
     <script src="https://trk.seniorbenefithelptoday.com/track.js?rtkcmpid=${rtkcmpid}" type="text/javascript"></script>
 
